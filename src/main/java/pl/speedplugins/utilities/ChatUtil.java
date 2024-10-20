@@ -1,14 +1,12 @@
 package pl.speedplugins.utilities;
 
-import org.bukkit.Bukkit;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,34 +52,9 @@ public class ChatUtil {
                 .map(ChatUtil::fixColor)
                 .collect(Collectors.toList());
     }
+    
     public static void sendActionbar(Player player, String message) {
-        if (player == null || message == null) {
-            return;
-        }
-        String nmsVersion = Bukkit.getServer().getClass().getPackage().getName();
-        try {
-            Class<?> craftPlayerClass = Class.forName("org.bukkit.craftbukkit." + nmsVersion + ".entity.CraftPlayer");
-            Object craftPlayer = craftPlayerClass.cast(player);
-            Class<?> ppoc = Class.forName("net.minecraft.server." + nmsVersion + ".PacketPlayOutChat");
-            Class<?> packet = Class.forName("net.minecraft.server." + nmsVersion + ".Packet");
-            Class<?> chat = Class.forName("net.minecraft.server." + nmsVersion + (nmsVersion.equalsIgnoreCase("v1_8_R1") ? ".ChatSerializer" : ".ChatComponentText"));
-            Class<?> chatBaseComponent = Class.forName("net.minecraft.server." + nmsVersion + ".IChatBaseComponent");
-            Method method = null;
-            if (nmsVersion.equalsIgnoreCase("v1_8_R1")) {
-                method = chat.getDeclaredMethod("a", String.class);
-            }
-            Object object = nmsVersion.equalsIgnoreCase("v1_8_R1") ? chatBaseComponent.cast(method.invoke(chat, "{'text': '" + message + "'}")) : chat.getConstructor(String.class).newInstance(message);
-            Object packetPlayOutChat = ppoc.getConstructor(chatBaseComponent, Byte.TYPE).newInstance(object, (byte)2);
-            Method handle = craftPlayerClass.getDeclaredMethod("getHandle", new Class[0]);
-            Object iCraftPlayer = handle.invoke(craftPlayer, new Object[0]);
-            Field playerConnectionField = iCraftPlayer.getClass().getDeclaredField("playerConnection");
-            Object playerConnection = playerConnectionField.get(iCraftPlayer);
-            Method sendPacket = playerConnection.getClass().getDeclaredMethod("sendPacket", packet);
-            sendPacket.invoke(playerConnection, packetPlayOutChat);
-        }
-        catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(fixColor(message)));
     }
 
     public static void sendTitle(Player p, String t, String s) {
